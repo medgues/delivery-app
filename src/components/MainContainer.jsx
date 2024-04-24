@@ -49,7 +49,7 @@ const MainContainer = () => {
         />
       </section>
 
-      <MenuContainer data={foodItems} />
+      <MenuContainer />
 
       {cartShow && <CartContainer />}
     </div>

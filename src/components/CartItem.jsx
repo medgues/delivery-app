@@ -1,104 +1,96 @@
 import React, { useEffect, useState } from "react";
-import { motion } from "framer-motion";
 import { BiMinus, BiPlus } from "react-icons/bi";
+import { motion } from "framer-motion";
 import { useStateValue } from "../context/StateProvider";
 import { actionType } from "../context/reducer";
+import { fetchCart } from "../utils/fetchLocalStorageData";
+import { IoTennisball } from "react-icons/io5";
+let items = [];
 
-const CartItem = ({ item }) => {
+const CartItem = ({ item, setFlag, flag }) => {
   const [{ cartItems }, dispatch] = useStateValue();
-  const [qty, setqty] = useState(item.Qty);
-  const [items, setitems] = useState([]);
-  useEffect(() => {
-    console.log("useEffect fired");
-    setitems(cartItems);
-  }, [qty]);
+  console.log("cartutem", item.Qty);
+  const [qty, setQty] = useState(item.Qty);
 
-  console.log("cartitems", cartItems);
-  const dispatchUpdatedItems = (items) => {
-    console.log("dispatcheditems", items);
-    setitems(items);
+  const cartDispatch = () => {
+    localStorage.setItem("cartItems", JSON.stringify(items));
     dispatch({
-      action: actionType.SET_CART_ITEMS,
+      type: actionType.SET_CART_ITEMS,
       cartItems: items,
     });
-    localStorage.setItem("cartItems", JSON.stringify(items));
   };
 
-  const updateQty = (action, clickedItem) => {
-    if (action === "add") {
-      console.log("add", action, clickedItem);
-      const mappeditems = cartItems.map((i) => {
-        if (i.id === clickedItem.id) {
-          i.Qty += 1;
-
-          return i;
+  const updateQty = (action, id) => {
+    if (action == "add") {
+      setQty(qty + 1);
+      cartItems.map((item) => {
+        if (item.id === id) {
+          item.Qty += 1;
+          setFlag(flag + 1);
         }
-        return i;
       });
-      console.log("mappeditems", mappeditems);
-      setqty(qty + 1);
-      dispatchUpdatedItems(mappeditems);
+      cartDispatch();
     } else {
-      console.log("remove", action, clickedItem);
-      if (clickedItem.Qty === 1) {
-        console.log("qty = 1");
-        const filtredItems = cartItems.filter((i) => i.id !== clickedItem.id);
-        setqty(qty - 1);
-        dispatchUpdatedItems(filtredItems);
+      // initial state value is one so you need to check if 1 then remove it
+      if (qty === 1) {
+        items = cartItems.filter((item) => item.id !== id);
+        setFlag(flag + 1);
+        cartDispatch();
       } else {
-        console.log("qtu /= 1");
-        const mappeditems = cartItems.map((i) => {
-          if (i.id === clickedItem.id) {
-            i.Qty -= 1;
-            return i;
+        setQty(qty - 1);
+        cartItems.map((item) => {
+          if (item.id === id) {
+            item.Qty -= 1;
+            setFlag(flag + 1);
           }
-          return i;
         });
-        console.log("mappeditems", mappeditems);
-        setqty(qty - 1);
-        dispatchUpdatedItems(mappeditems);
+        cartDispatch();
       }
     }
   };
-  console.log(item);
+
+  useEffect(() => {
+    items = cartItems;
+  }, [qty, items]);
+
   return (
-    <motion.div
-      initial={{ opacity: 0, scale: 0 }}
-      animate={{ opacity: 1, scale: 1 }}
-      className=" w-full p-1 px-2 rounded-lg bg-cartItem flex items-center gap-2"
-    >
+    <div className="w-full p-1 px-2 rounded-lg bg-cartItem flex items-center gap-2">
       <img
         src={item?.imageURL}
-        alt=""
         className="w-20 h-20 max-w-[60px] rounded-full object-contain"
+        alt=""
       />
 
-      <div className=" flex flex-col gap-2">
-        <p className="text-base text-gray-50 "> {item?.title}</p>
+      {/* name section */}
+      <div className="flex flex-col gap-2">
+        <p className="text-base text-gray-50">{item?.title}</p>
         <p className="text-sm block text-gray-300 font-semibold">
-          $ {parseFloat(item?.price) * item.Qty}
+          {Math.floor(parseFloat(item?.price) * qty * Math.pow(10, 2)) /
+            Math.pow(10, 2)}
         </p>
       </div>
-      <div className="group flex items-center gap-2 ml-auto cursor-pointer ">
+
+      {/* button section */}
+      <div className="group flex items-center gap-2 ml-auto cursor-pointer">
         <motion.div
-          className="text-gray-50"
           whileTap={{ scale: 0.75 }}
-          onClick={() => updateQty("remove", item)}
+          onClick={() => updateQty("remove", item?.id)}
         >
-          <BiMinus />
+          <BiMinus className="text-gray-50 " />
         </motion.div>
-        <p className=" w-5 h-5 rounded-sm bg-cartBg text-gray-50 flex items-center justify-center">
-          {item.Qty}
+
+        <p className="w-5 h-5 rounded-sm bg-cartBg text-gray-50 flex items-center justify-center">
+          {qty}
         </p>
+
         <motion.div
-          className="text-gray-50"
           whileTap={{ scale: 0.75 }}
-          onClick={() => updateQty("add", item)}
+          onClick={() => updateQty("add", item?.id)}
         >
-          <BiPlus />
+          <BiPlus className="text-gray-50 " />
         </motion.div>
       </div>
-    </motion.div>
+    </div>
   );
 };
 
